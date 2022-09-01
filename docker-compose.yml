@@ -1,0 +1,14 @@
+version: '3.1'
+services:
+  database:
+    container_name: reading-db
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - "reading-db-vol:/var/lib/postgresql/data"
+
+volumes:
+  reading-db-vol:
