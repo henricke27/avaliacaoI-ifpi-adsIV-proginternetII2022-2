@@ -1,6 +1,7 @@
 package br.edu.ifpi.ads.readingapp.filter;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -14,6 +15,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
@@ -37,17 +39,17 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         chain.doFilter(request, response);
     }
 
-
     private UsernamePasswordAuthenticationToken getAuthentication(String token) throws JWTVerificationException {
-        DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256("COXINHA".getBytes()))
-                .build()
-                .verify(token);
+        JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256("COXINHA".getBytes()))
+                .build();
 
-        String subject = decodedJWT.getSubject();
+        DecodedJWT decodedTokenClient = jwtVerifier.verify(token);
 
-        if(subject == null){
+        if(decodedTokenClient.getToken() == null){
             return null;
         }
+
+        String subject = decodedTokenClient.getSubject();
 
         return new UsernamePasswordAuthenticationToken(subject, null, new ArrayList<>());
     }

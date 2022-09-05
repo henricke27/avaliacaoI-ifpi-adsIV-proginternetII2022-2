@@ -2,16 +2,14 @@ package br.edu.ifpi.ads.readingapp.filter;
 
 import br.edu.ifpi.ads.readingapp.domain.User;
 import br.edu.ifpi.ads.readingapp.repository.UserRepository;
-import br.edu.ifpi.ads.readingapp.service.UserService;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -19,35 +17,40 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Map;
 
+@Log4j2
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private AuthenticationManager authenticationManager;
-    private UserService userService;
     private UserRepository userRepository;
-    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, UserService userService, UserRepository userRepository) {
+
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
-        this.userService = userService;
         this.userRepository = userRepository;
         setFilterProcessesUrl("/signin");
+        setUsernameParameter("email");
     }
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
         try {
             User userIncomplete = new ObjectMapper().readValue(request.getInputStream(), User.class);
+            User userFound = userRepository.findByEmail(userIncomplete.getEmail());
 
-            User userFound = userRepository.findByEmail(userIncomplete.getUsername());
+            log.info("User {}", userFound);
 
-            if (userFound.getEnable().equals(false)){
+            if (userFound == null){
+                throw new RuntimeException("Usuario não encontrado");
+            }
+            if(userFound.getEnable().equals(false)){
                 throw new RuntimeException("Conta inativa");
             }
 
             Authentication token = new UsernamePasswordAuthenticationToken
-                    (userFound.getEmail(), userFound.getPassword(), new ArrayList<>());
+                    (userIncomplete.getEmail(), userIncomplete.getPassword(), new ArrayList<>());
             return authenticationManager.authenticate(token);
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
@@ -60,15 +63,18 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         String accessToken = JWT.create()
                 .withSubject(user.getEmail())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
+                .withExpiresAt(Instant.now().plusMillis(60 * 60 * 1000))
+                .withIssuedAt(Instant.now())
                 .withClaim("name",user.getName())
                 .withClaim("phone", user.getPhone().getNumber())
                 .sign(Algorithm.HMAC256("COXINHA".getBytes()));
 
         String refreshToken = JWT.create()
+                .withSubject(user.getEmail())
+                .withExpiresAt(Instant.now().plusMillis((24 * 60) * 60 * 1000))
+                .withIssuedAt(Instant.now())
                 .withClaim("name",user.getName())
                 .withClaim("phone", user.getPhone().getNumber())
-                .withExpiresAt(new Date(System.currentTimeMillis() + (24 * 60) * 60 * 1000))
                 .sign(Algorithm.HMAC256("COXINHA".getBytes()));
 
         user.setRefreshToken(refreshToken);

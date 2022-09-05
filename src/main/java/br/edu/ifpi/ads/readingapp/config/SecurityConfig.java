@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,14 +26,17 @@ public class SecurityConfig {
         AuthenticationManager authenticationManager = buildAuthenticationManager(http);
 
         http.csrf().disable()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests()
-                .antMatchers("/signin","/signup","/validate/account","/validation-code/phone").permitAll()
+                .antMatchers("/signup","/validate/account").permitAll()
                 .anyRequest()
                 .authenticated()
                 .and()
-                .addFilter(new JWTAuthenticationFilter(authenticationManager, userService, userRepository))
-                .addFilter(new JWTAuthorizationFilter(authenticationManager));;
+                .addFilter(new JWTAuthenticationFilter(authenticationManager, userRepository))
+                .addFilter(new JWTAuthorizationFilter(authenticationManager));
 
         return http.build();
     }
