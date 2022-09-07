@@ -27,9 +27,8 @@ public class User implements UserDetails {
     private Phone phone;
     private String refreshToken;
     private Boolean enable;
-    @OneToMany(mappedBy = "users")
-    private List<UserLikes> userLikes;
-    @OneToMany(mappedBy = "holder")
+
+    @OneToMany(mappedBy = "holder", fetch = FetchType.EAGER)
     private List<Book> books;
 
     @Override
@@ -62,5 +61,15 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

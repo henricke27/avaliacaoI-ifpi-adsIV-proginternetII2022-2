@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AnnotationRemoveForm {
-    private Long annotationId;
-    private Long bookId;
+public class AnnotationDto {
+    private Long id;
+    private String annotation;
 }

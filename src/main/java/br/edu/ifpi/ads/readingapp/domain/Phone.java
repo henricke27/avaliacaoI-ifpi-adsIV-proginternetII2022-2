@@ -21,8 +21,11 @@ public class Phone {
     private String number;
     private Boolean enable;
 
-    public Phone(String number, Boolean enable) {
-        this.number = number;
-        this.enable = enable;
+    @Override
+    public String toString() {
+        return "Phone{" +
+                "id=" + id +
+                ", number='" + number + '\'' +
+                '}';
     }
 }

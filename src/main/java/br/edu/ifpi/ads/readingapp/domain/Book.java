@@ -20,12 +20,18 @@ public class Book {
     private User holder;
     private String title;
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
-    private List<Annotation> annotations;
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
     private List<UserLikes> userLikes;
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
+    private List<Annotation> annotations;
     private Integer page;
     private Boolean concluded;
     private Boolean stopped;
 
-
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                '}';
+    }
 }

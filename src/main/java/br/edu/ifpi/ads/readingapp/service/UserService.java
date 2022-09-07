@@ -177,8 +177,6 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(subject);
     }
 
-
-
     public String generateCode(){
         code = String.valueOf((int) (Math.random() * 1000000));
         log.info("Código de ativação: {}", code);

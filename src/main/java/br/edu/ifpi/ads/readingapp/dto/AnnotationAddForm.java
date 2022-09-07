@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AnnotationAddForm {
-    private Long id;
+    private Long bookId;
     private String annotation;
-    private Integer order;
 }

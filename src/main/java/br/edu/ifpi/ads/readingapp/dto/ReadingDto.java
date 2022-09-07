@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReadingDto {
+    private Long id;
     private String holder;
     private String title;
     private List<String> annotations;

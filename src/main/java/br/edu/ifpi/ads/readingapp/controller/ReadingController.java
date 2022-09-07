@@ -6,6 +6,7 @@ import br.edu.ifpi.ads.readingapp.dto.ReadingPageForm;
 import br.edu.ifpi.ads.readingapp.dto.ReadingStatusForm;
 import br.edu.ifpi.ads.readingapp.service.ReadingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,31 +20,32 @@ import java.util.List;
 public class ReadingController {
     private final ReadingService readingService;
 
-    @PostMapping("/book")
+    @PostMapping
     public ResponseEntity<ReadingDto> add(@RequestBody ReadingForm readingForm, HttpServletRequest request){
         return new ResponseEntity<>(readingService.add(readingForm, request), HttpStatus.CREATED);
     }
 
-    @GetMapping("/books")
+    @GetMapping("/all")
     public ResponseEntity<List<ReadingDto>> listAll(HttpServletRequest request){
         return new ResponseEntity<>(readingService.listAll(request), HttpStatus.CREATED);
     }
 
-    @DeleteMapping("/book/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeById(@PathVariable Long id, HttpServletRequest request){
         readingService.removeById(id, request);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PatchMapping("/book/page")
+    @PatchMapping("/page")
     public ResponseEntity<Void> changePage(@RequestBody ReadingPageForm readingPageForm, HttpServletRequest request){
         readingService.changePage(readingPageForm ,request);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PatchMapping("/book/status")
+    @PatchMapping("/status")
     public ResponseEntity<Void> readingStatus(@RequestBody ReadingStatusForm readingStatusForm, HttpServletRequest request){
         readingService.changeStatus(readingStatusForm, request);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 }

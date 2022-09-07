@@ -1,5 +1,9 @@
 package br.edu.ifpi.ads.readingapp.filter;
 
+/*
+* Deprecated
+*
+* */
 public class AccessTokenSingleton {
     private static String accessToken = "";
 
