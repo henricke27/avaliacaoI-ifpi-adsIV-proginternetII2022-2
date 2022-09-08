@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 public class AnnotationService {
 
     private final ReadingService readingService;
-    private final ReadingRepository readingRepository;
     private final AnnotationRepository annotationRepository;
 
     public ReadingDto add(AnnotationAddForm annotation, HttpServletRequest request) {
@@ -41,13 +40,14 @@ public class AnnotationService {
         annotationRepository.save(newAnnotation);
         bookFound.getAnnotations().add(newAnnotation);
 
-        Book book = readingRepository.save(bookFound);
+        Book book = readingService.save(bookFound);
 
         return ReadingDto.builder()
                 .id(book.getId())
                 .title(book.getTitle())
+                .likesNumber(book.getUserLikes().size())
                 .likes(book.getUserLikes().stream()
-                        .map(ul -> ul.getUsers().getName())
+                        .map(ul -> ul.getUserLike().getName())
                         .collect(Collectors.toList()))
                 .page(book.getPage())
                 .holder(book.getHolder().getName())
@@ -64,7 +64,7 @@ public class AnnotationService {
         Annotation annotationFound = getAnnotationById(annotationRemoveForm.getAnnotationId(), bookFound);
         bookFound.getAnnotations().remove(annotationFound);
 
-        readingRepository.save(bookFound);
+        readingService.save(bookFound);
         annotationRepository.deleteById(annotationFound.getId());
     }
 

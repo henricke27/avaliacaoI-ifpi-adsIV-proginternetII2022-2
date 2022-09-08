@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -15,7 +16,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
@@ -39,9 +42,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     private UsernamePasswordAuthenticationToken getAuthentication(String token) throws JWTVerificationException {
-        JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256("COXINHA".getBytes()))
-                .build();
-
+        JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256("COXINHA".getBytes())).build();
         DecodedJWT decodedTokenClient = jwtVerifier.verify(token);
 
         if(decodedTokenClient.getToken() == null){
@@ -49,7 +50,12 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         }
 
         String subject = decodedTokenClient.getSubject();
+        String authoritiesAsString = decodedTokenClient.getClaim("authorities").asString();
 
-        return new UsernamePasswordAuthenticationToken(subject, null, new ArrayList<>());
+        List<SimpleGrantedAuthority> authorities = Arrays.stream(authoritiesAsString.split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        return new UsernamePasswordAuthenticationToken(subject, null, authorities);
     }
 }

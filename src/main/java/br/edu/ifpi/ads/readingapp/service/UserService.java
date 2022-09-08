@@ -4,8 +4,6 @@ import br.edu.ifpi.ads.readingapp.domain.Phone;
 import br.edu.ifpi.ads.readingapp.domain.User;
 import br.edu.ifpi.ads.readingapp.dto.SignupForm;
 import br.edu.ifpi.ads.readingapp.dto.ValidateAccountForm;
-import br.edu.ifpi.ads.readingapp.dto.ValidatePhoneForm;
-import br.edu.ifpi.ads.readingapp.repository.PhoneRepository;
 import br.edu.ifpi.ads.readingapp.repository.UserRepository;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
@@ -35,12 +33,12 @@ import java.util.Optional;
 @Transactional(rollbackFor = Exception.class)
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
-    private final PhoneRepository phoneRepository;
-    private static String code = "";
+    private final PhoneService phoneService;
+    private static String accountCode = "";
 
-    public String signup(SignupForm signupForm){
+    public Map<String, String> signup(SignupForm signupForm){
         User userFound = userRepository.findByEmail(signupForm.getEmail());
-        Phone phoneFound = phoneRepository.findByNumber(signupForm.getPhone());
+        Phone phoneFound = phoneService.findByNumber(signupForm.getPhone());
 
         Optional.ofNullable(userFound).ifPresent((user) -> {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado!");
@@ -55,7 +53,7 @@ public class UserService implements UserDetailsService {
                 .enable(false)
                 .build();
 
-        Phone phoneSaved = phoneRepository.save(phone);
+        Phone phoneSaved = phoneService.save(phone);
 
         PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
@@ -64,40 +62,26 @@ public class UserService implements UserDetailsService {
                 .password(passwordEncoder.encode(signupForm.getPassword()))
                 .name(signupForm.getName())
                 .phone(phoneSaved)
-                .enable(false)
+                .authorities("ROLE_INACTIVE_ACCOUNT")
                 .build();
 
         userRepository.save(user);
-        return generateCode();
+        return Map.of("activationCode",generateAccountCode());
     }
 
     public void validateAccount(ValidateAccountForm validateAccountForm) {
-        if (!validateAccountForm.getCode().equals(code)) {
+        if (!validateAccountForm.getCode().equals(accountCode)) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Código inválido");
         }
         String email = validateAccountForm.getEmail();
         User userFound = userRepository.findByEmail(email);
 
-        if (userFound == null || userFound.getEnable().equals(true)){
+        if (userFound == null || !userFound.getAuthoritiesAsString().contains("ROLE_INACTIVE_ACCOUNT")){
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Email inválido para ativação");
         }
 
-        userFound.setEnable(true);
+        userFound.setAuthorities("ROLE_ACTIVE_ACCOUNT");
         userRepository.save(userFound);
-    }
-
-    public void validatePhone(ValidatePhoneForm validatePhoneForm) {
-        if (!validatePhoneForm.getCode().equals(code)) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Código inválido");
-        }
-        Phone phone = phoneRepository.findByNumber(validatePhoneForm.getPhone());
-
-        if (phone == null || phone.getEnable().equals(true)){
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Número de telefone inválido para ativação");
-        }
-
-        phone.setEnable(true);
-        phoneRepository.save(phone);
     }
 
     @Override
@@ -145,8 +129,6 @@ public class UserService implements UserDetailsService {
                 .withSubject(user.getEmail())
                 .withExpiresAt(Instant.now().plusMillis((24 * 60) * 60 * 1000))
                 .withIssuedAt(Instant.now())
-                .withClaim("name",user.getName())
-                .withClaim("phone", user.getPhone().getNumber())
                 .sign(Algorithm.HMAC256("COXINHA".getBytes()));
 
         user.setRefreshToken(newRefreshToken);
@@ -177,9 +159,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(subject);
     }
 
-    public String generateCode(){
-        code = String.valueOf((int) (Math.random() * 1000000));
-        log.info("Código de ativação: {}", code);
-        return code;
+    public String generateAccountCode(){
+        accountCode = String.valueOf((int) (Math.random() * 1000000));
+        log.info("Código de ativação: {}", accountCode);
+        return accountCode;
     }
 }

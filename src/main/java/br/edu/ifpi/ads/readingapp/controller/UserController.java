@@ -22,25 +22,21 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody SignupForm signupForm){
+    public ResponseEntity<Map<String, String>> signup(@RequestBody SignupForm signupForm){
         return new ResponseEntity<>(userService.signup(signupForm), HttpStatus.ACCEPTED);
     }
+
+    @GetMapping("/validation-code/account")
+    public ResponseEntity<String> solicitarAccountCode(){
+        String code = userService.generateAccountCode();
+        return new ResponseEntity<>(code ,HttpStatus.ACCEPTED);
+    }
+
+
 
     @PostMapping("/validate/account")
     public ResponseEntity<Void> validateAccount(@RequestBody ValidateAccountForm validateAccountForm){
         userService.validateAccount(validateAccountForm);
-        return new ResponseEntity<>(HttpStatus.CREATED);
-    }
-
-    @GetMapping("/validation-code/phone")
-    public ResponseEntity<String> solicitarPhone(){
-        String code = userService.generateCode();
-        return new ResponseEntity<>(code ,HttpStatus.ACCEPTED);
-    }
-
-    @PostMapping("/validate/phone")
-    public ResponseEntity<Void> validatePhone(@RequestBody ValidatePhoneForm validatePhoneForm){
-        userService.validatePhone(validatePhoneForm);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

@@ -5,11 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -26,14 +29,16 @@ public class User implements UserDetails {
     @OneToOne
     private Phone phone;
     private String refreshToken;
-    private Boolean enable;
+    private String authorities;
 
     @OneToMany(mappedBy = "holder", fetch = FetchType.EAGER)
     private List<Book> books;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return Arrays.stream(authorities.split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
     @Override
     public String getUsername() {
@@ -61,6 +66,10 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public String getAuthoritiesAsString() {
+        return authorities;
     }
 
     @Override

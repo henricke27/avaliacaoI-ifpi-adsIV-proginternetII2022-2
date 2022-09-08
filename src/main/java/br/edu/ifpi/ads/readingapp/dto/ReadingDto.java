@@ -15,6 +15,7 @@ public class ReadingDto {
     private Long id;
     private String holder;
     private String title;
+    private Integer likesNumber;
     private List<String> annotations;
     private List<String> likes;
     private Integer page;

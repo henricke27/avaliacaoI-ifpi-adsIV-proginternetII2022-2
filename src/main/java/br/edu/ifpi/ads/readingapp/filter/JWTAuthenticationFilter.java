@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -44,12 +45,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             if (userFound == null){
                 throw new RuntimeException("Usuario não encontrado");
             }
-            if(userFound.getEnable().equals(false)){
+            if(userFound.getAuthoritiesAsString().contains("INACTIVE_ACCOUNT")){
                 throw new RuntimeException("Conta inativa");
             }
 
             Authentication token = new UsernamePasswordAuthenticationToken
-                    (userIncomplete.getEmail(), userIncomplete.getPassword(), new ArrayList<>());
+                    (userIncomplete.getEmail(), userIncomplete.getPassword(), userFound.getAuthorities());
             return authenticationManager.authenticate(token);
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
@@ -66,14 +67,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .withIssuedAt(Instant.now())
                 .withClaim("name",user.getName())
                 .withClaim("phone", user.getPhone().getNumber())
+                .withClaim("authorities", user.getAuthoritiesAsString())
                 .sign(Algorithm.HMAC256("COXINHA".getBytes()));
 
         String refreshToken = JWT.create()
                 .withSubject(user.getEmail())
                 .withExpiresAt(Instant.now().plusMillis((24 * 60) * 60 * 1000))
                 .withIssuedAt(Instant.now())
-                .withClaim("name",user.getName())
-                .withClaim("phone", user.getPhone().getNumber())
                 .sign(Algorithm.HMAC256("COXINHA".getBytes()));
 
         user.setRefreshToken(refreshToken);

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableWebSecurity
 public class SecurityConfig {
 
     private final UserService userService;
@@ -31,9 +33,8 @@ public class SecurityConfig {
                 .and()
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests()
-                .antMatchers("/signup","/validate/account").permitAll()
-                .anyRequest()
-                .authenticated()
+                .antMatchers("/signup","/validate/account","/verification-code/phone","verification-code/account").permitAll()
+                .anyRequest().hasRole("ACTIVE_ACCOUNT")
                 .and()
                 .addFilter(new JWTAuthenticationFilter(authenticationManager, userRepository))
                 .addFilter(new JWTAuthorizationFilter(authenticationManager));

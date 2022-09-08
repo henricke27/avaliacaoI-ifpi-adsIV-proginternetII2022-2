@@ -7,6 +7,7 @@ import br.edu.ifpi.ads.readingapp.dto.ReadingStatusForm;
 import br.edu.ifpi.ads.readingapp.service.ReadingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-@RequestMapping("/reading")
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/reading")
 public class ReadingController {
     private final ReadingService readingService;
 
@@ -27,7 +28,7 @@ public class ReadingController {
 
     @GetMapping("/all")
     public ResponseEntity<List<ReadingDto>> listAll(HttpServletRequest request){
-        return new ResponseEntity<>(readingService.listAll(request), HttpStatus.CREATED);
+        return new ResponseEntity<>(readingService.listAll(request), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
@@ -39,13 +40,17 @@ public class ReadingController {
     @PatchMapping("/page")
     public ResponseEntity<Void> changePage(@RequestBody ReadingPageForm readingPageForm, HttpServletRequest request){
         readingService.changePage(readingPageForm ,request);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PatchMapping("/status")
-    public ResponseEntity<Void> readingStatus(@RequestBody ReadingStatusForm readingStatusForm, HttpServletRequest request){
+    public ResponseEntity<Void> changeStatus(@RequestBody ReadingStatusForm readingStatusForm, HttpServletRequest request){
         readingService.changeStatus(readingStatusForm, request);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/timeline")
+    public ResponseEntity<Page<ReadingDto>> findAll(Pageable pageable){
+        return new ResponseEntity<>(readingService.findAll(pageable), HttpStatus.OK);
+    }
 }

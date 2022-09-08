@@ -3,14 +3,11 @@ package br.edu.ifpi.ads.readingapp.service;
 import br.edu.ifpi.ads.readingapp.domain.Annotation;
 import br.edu.ifpi.ads.readingapp.domain.Book;
 import br.edu.ifpi.ads.readingapp.domain.User;
-import br.edu.ifpi.ads.readingapp.domain.UserLikes;
 import br.edu.ifpi.ads.readingapp.dto.ReadingDto;
 import br.edu.ifpi.ads.readingapp.dto.ReadingForm;
 import br.edu.ifpi.ads.readingapp.dto.ReadingPageForm;
 import br.edu.ifpi.ads.readingapp.dto.ReadingStatusForm;
 import br.edu.ifpi.ads.readingapp.repository.ReadingRepository;
-import br.edu.ifpi.ads.readingapp.repository.UserLikesRepository;
-import br.edu.ifpi.ads.readingapp.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
@@ -23,7 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -33,9 +29,11 @@ import java.util.stream.Collectors;
 public class ReadingService {
 
     private final UserService userService;
-    private final UserRepository userRepository;
-    private final UserLikesRepository userLikesRepository;
     private final ReadingRepository readingRepository;
+
+    public Book save(Book book){
+        return readingRepository.save(book);
+    }
 
     public ReadingDto add(ReadingForm readingForm, HttpServletRequest request) {
         User userBySubject = userService.getUserBySubject(request);
@@ -71,8 +69,9 @@ public class ReadingService {
         return books.stream().map(book -> ReadingDto.builder()
                 .id(book.getId())
                 .title(book.getTitle())
+                .likesNumber(book.getUserLikes().size())
                 .likes(book.getUserLikes().stream()
-                        .map(ul -> ul.getUsers().getName())
+                        .map(ul -> ul.getUserLike().getName())
                         .collect(Collectors.toList()))
                 .page(book.getPage())
                 .holder(book.getHolder().getName())
@@ -123,8 +122,9 @@ public class ReadingService {
         return bookPage.map(book -> ReadingDto.builder()
                 .id(book.getId())
                 .title(book.getTitle())
+                .likesNumber(book.getUserLikes().size())
                 .likes(book.getUserLikes().stream()
-                        .map(ul -> ul.getUsers().getName())
+                        .map(ul -> ul.getUserLike().getName())
                         .collect(Collectors.toList()))
                 .page(book.getPage())
                 .holder(book.getHolder().getName())
@@ -136,18 +136,8 @@ public class ReadingService {
                 .build());
     }
 
-    public void like(Long id, HttpServletRequest request) {
-        User userBySubject = userService.getUserBySubject(request);
-
-        Book bookFound = readingRepository.findById(id).orElseThrow(() ->
+    public Book findById(Long id) {
+        return readingRepository.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.BAD_REQUEST, "Leitura não encontrada!"));
-
-        UserLikes userLikes = UserLikes.builder()
-                .book(bookFound)
-                .users(userBySubject)
-                .build();
-
-        bookFound.getUserLikes().add(userLikes);
-        userLikesRepository.save(userLikes);
     }
 }

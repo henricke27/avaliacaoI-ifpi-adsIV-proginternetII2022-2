@@ -18,7 +18,7 @@ public class UserLikes {
     @ManyToOne
     private Book book;
     @ManyToOne
-    private User users;
+    private User userLike;
 
     @Override
     public String toString() {
